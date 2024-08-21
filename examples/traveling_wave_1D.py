@@ -178,12 +178,17 @@ fields, shift_list, nmodes, L, dx = generate_data(Nx, Nt, CASE)
 # %% CALL THE SPOD algorithm
 ############################################
 data_shape = [Nx, 1, 1, Nt]
-transfos = [
-    Transform(data_shape, [L], shifts=shift_list[0], dx=[dx], interp_order=5),
-    Transform(data_shape, [L], shifts=shift_list[1], dx=[dx], interp_order=5),
-    Transform(data_shape, [L], shifts=shift_list[2], dx=[dx], interp_order=5),
-]
-
+if CASE == "multiple_ranks_redunddant":
+    transfos = [
+        Transform(data_shape, [L], shifts=shift_list[0], dx=[dx], interp_order=5),
+        Transform(data_shape, [L], shifts=shift_list[1], dx=[dx], interp_order=5),
+        Transform(data_shape, [L], shifts=shift_list[2], dx=[dx], interp_order=5),
+    ]
+else:
+        transfos = [
+        Transform(data_shape, [L], shifts=shift_list[0], dx=[dx], interp_order=5),
+        Transform(data_shape, [L], shifts=shift_list[1], dx=[dx], interp_order=5),
+    ]
 interp_err = np.max([give_interpolation_error(fields, transfo) for transfo in transfos])
 print("interpolation error: {:1.2e}".format(interp_err))
 # %%
