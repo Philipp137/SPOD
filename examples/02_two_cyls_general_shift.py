@@ -298,8 +298,8 @@ def compute_offline_errors(
 plt.close("all")
 # ddir = ROOT_DIR+"/../data"
 # ddir = "../data/1params_opt/"
-ddir = "../../../sPOD-data/WABBIT/data/2cylinder"
-idir = "../images/vortex"
+ddir = "./2cylinder"
+idir = "./images/2cylinder"
 case = "vortex_street"
 shift_type = "general"
 skip_existing = False  # True #False

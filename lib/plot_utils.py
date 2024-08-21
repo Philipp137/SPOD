@@ -13,7 +13,7 @@ from IPython.display import HTML
 fc = farge_colormap_multi(etalement_du_zero=0.2, limite_faible_fort=0.5)
 
 from matplotlib import rc
-rc('font',**{'family':'serif','serif':['Helvetica'],'size'   : 12})
+rc('font',**{'family':'serif','size'   : 12})
 
 rc('text', usetex=True)
 
