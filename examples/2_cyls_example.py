@@ -72,49 +72,6 @@ def give_shift_ALE(time, x, mu_vec, freq, L):
     return shift
 
 
-def show_animation_headless(
-    q,
-    Xgrid=None,
-    cycles=1,
-    frequency=1,
-    figure_number=None,
-    cmap=fc,
-    vmin=None,
-    vmax=None,
-    save_path=None,
-):
-    ntime = q.shape[-1]
-    if Xgrid is not None:
-        for t in range(0, cycles * ntime, frequency):
-            fig, ax = plt.subplots()
-            if vmin is None:
-                vmin = np.min(q)
-            if vmax is None:
-                vmax = np.max(q)
-            h = ax.pcolormesh(
-                Xgrid[0], Xgrid[1], q[..., t % ntime], cmap=cmap, vmin=vmin, vmax=vmax
-            )
-            ax.axis("image")
-            ax.set_xticks([])
-            ax.set_yticks([])
-            ax.set_xlabel(r"x")
-            ax.set_ylabel(r"y")
-            fig.colorbar(h)
-
-            if save_path is not None:
-                fig.savefig(f"{save_path}/vid_{t:03d}.png")
-            plt.close(fig)  # Close the figure to free memory
-    else:
-        x = np.arange(0, np.size(q, 0))
-        for t in range(0, cycles * ntime, frequency):
-            fig, ax = plt.subplots()
-            (h,) = ax.plot(x, q[:, t % ntime])
-            ax.set_ylim(np.min(q), np.max(q))
-            ax.set_xlabel(r"x")
-
-            if save_path is not None:
-                fig.savefig(f"{save_path}/vid_{t:03d}.png")
-            plt.close(fig)
 
 # ============================================================================ #
 #                                 Main Program                                 #
@@ -167,18 +124,6 @@ vort = np.asarray(
 )
 vort = np.moveaxis(vort, 0, -1)
 
-# show simulation data
-plot_full = False
-if plot_full == True:
-    os.makedirs("./images/full", exist_ok=True)
-
-    show_animation_headless(
-        vort.swapaxes(0, 1),
-        Xgrid=[x, y],
-        vmin=-1,
-        vmax=1,
-        save_path=idir+"/FOM_shift",
-    )
 
 
 # ============================================================================ #
@@ -210,24 +155,12 @@ trafos = [shift_trafo_1, shift_trafo_2]
 
 vort_shift = shift_trafo_2.reverse(vort)
 
-# plot data
-os.makedirs(idir+"/FOM_shift/", exist_ok=True)
-show_animation_headless(
-    vort_shift.swapaxes(0, 1),
-    Xgrid=[x, y],
-    vmin=-1,
-    vmax=1,
-    save_path=idir+"/FOM_shift",
-)
-
-
-
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#                        ADM
+#                        sPOD - Method
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-print("START ADM")
+print("START "+ METHOD)
 
 ####################
 # Perform sPOD algorithm
