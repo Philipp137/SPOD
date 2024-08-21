@@ -134,7 +134,7 @@ def generate_data(Nx, Nt, case, noise_percent=0.2):
 # ============================================================================ #
 #                              CONSTANT DEFINITION                             #
 # ============================================================================ #
-PIC_DIR = "../images/"
+PIC_DIR = "./images/timing/"
 SAVE_FIG = False
 CASE = "multiple_ranks"
 # CASE = "sine_waves"
@@ -306,7 +306,9 @@ plt.plot([], [], 'x-', color=handl.get_color(), label=r"$t_\mathrm{cpu}(N)=\math
 plt.xlabel(r"dimension")
 plt.ylabel(r"$t_\mathrm{cpu}$ [sec]")
 plt.legend()
-save_fig("timing_ADM",fig)
+
+os.makedirs(PIC_DIR,exist_ok=True)
+save_fig(PIC_DIR + "/timing_ADM",fig)
 
 
 
