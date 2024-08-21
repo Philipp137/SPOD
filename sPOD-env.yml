@@ -4,9 +4,13 @@ channels:
   - anaconda
   - conda-forge
 dependencies:
+  - python==3.8
   - numpy
-  - matplotlib
+  - webcolors==1.13
+  - matplotlib==3.5.0
   - scipy
   - notebook
   - scikit-learn
   - tikzplotlib
+  - pip:
+    - polarTransform

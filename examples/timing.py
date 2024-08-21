@@ -12,7 +12,7 @@ The file provides numerical examples.
 #                              MODULES IMPORTATION                             #
 # ============================================================================ #
 import sys
-
+import os
 sys.path.append("../lib")
 import numpy as np
 from numpy import mod, meshgrid, cos, sin, exp, pi
@@ -149,13 +149,16 @@ METHOD = "ALM"
 
 Nt_list = np.logspace(3,11,9, base=2,dtype=np.int32)
 Nx_list = np.logspace(7,16,10, base=2,dtype=np.int32)
-
 # ============================================================================ #
 # Test scaling with number of grid points
 # ============================================================================ #
 print(Nx_list)
 tcpu_list =[]
 tcpu_list_SVD = []
+tcpu_SVD_list = []
+tcpu_rSVD_list_N = []
+tcpu_SVD_list_N = []
+
 mu0 = 0.01
 lambd0 = 0.01
 for k,Nx in enumerate(Nx_list):
@@ -185,6 +188,7 @@ for k,Nx in enumerate(Nx_list):
 
     start = timer()
     ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm)
+    tcpu_SVD_list.append(ret.tcpu_SVD)
     tcpu_list.append( timer()- start)
 
     # timing for trunctated SVD
@@ -238,6 +242,7 @@ for k,Nt in enumerate(Nt_list):
 
     start = timer()
     ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm)
+    tcpu_SVD_list_N.append(ret.tcpu_SVD)
     tcpu_list_N.append( timer()- start)
 
     # timing for trunctated SVD
@@ -291,6 +296,7 @@ for k,Nt in enumerate(Nt_list):
 
     start = timer()
     ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm, nmodes=10)
+    tcpu_rSVD_list_N.append(ret.tcpu_SVD)
     tcpu_list_N.append( timer()- start)
 
     # timing for trunctated SVD
@@ -309,6 +315,7 @@ plt.legend()
 
 os.makedirs(PIC_DIR,exist_ok=True)
 save_fig(PIC_DIR + "/timing_ADM",fig)
+plt.title(r"ALM costs")
 
 
 
@@ -327,9 +334,33 @@ plt.plot([], [], 'x-', color=handl.get_color(), label=r"$t_\mathrm{cpu}(N)=\math
 coefs = np.polyfit(np.log(Nt_list), np.log(tcpu_list_rSVD_N), 1)
 handl, = plt.loglog(Nt_list, tcpu_list_rSVD_N,'x')
 plt.loglog(Nt_list, np.exp(coefs[1])*Nt_list**coefs[0],'-', color=handl.get_color())
-plt.plot([], [], 'x-', color=handl.get_color(), label=r"$t_\mathrm{cpu}(N)=\mathcal{O}(N^{%.1f})$" % coefs[0])
+plt.plot([], [], 'x-', color=handl.get_color(), label=r"$t^\mathrm{rSVD}_\mathrm{cpu}(N)=\mathcal{O}(N^{%.1f})$" % coefs[0])
 plt.legend()
 
-save_fig("timing_SVD",fig)
+save_fig(PIC_DIR + "/timing_POD",fig)
+plt.title(r"SVD costs")
+
+
+ig = plt.figure(59)
+coefs = np.polyfit(np.log(Nx_list), np.log(tcpu_SVD_list), 1)
+handl, = plt.loglog(Nx_list, tcpu_SVD_list,'*')
+plt.loglog(Nx_list, np.exp(coefs[1])*Nx_list**coefs[0],'-', color=handl.get_color())
+plt.plot([], [], '*--', color=handl.get_color(), label=r"$t_\mathrm{cpu}(M)=\mathcal{O}(M^{%.1f})$" % coefs[0])
+
+
+coefs = np.polyfit(np.log(Nt_list), np.log(tcpu_SVD_list_N), 1)
+handl, = plt.loglog(Nt_list, tcpu_SVD_list_N,'o')
+plt.loglog(Nt_list, np.exp(coefs[1])*Nt_list**coefs[0],'-', color=handl.get_color())
+plt.plot([], [], 'x-', color=handl.get_color(), label=r"$t_\mathrm{cpu}(N)=\mathcal{O}(N^{%.1f})$" % coefs[0])
+
+coefs = np.polyfit(np.log(Nt_list), np.log(tcpu_rSVD_list_N), 1)
+handl, = plt.loglog(Nt_list, tcpu_rSVD_list_N,'x')
+plt.loglog(Nt_list, np.exp(coefs[1])*Nt_list**coefs[0],'-', color=handl.get_color())
+plt.plot([], [], 'x-', color=handl.get_color(), label=r"$t^\mathrm{rSVD}_\mathrm{cpu}(N)=\mathcal{O}(N^{%.1f})$" % coefs[0])
+plt.legend()
+
+save_fig(PIC_DIR + "/timing_SVD",fig)
+plt.title(r"cummulated SVD costs in ALM algorithm")
+
 
 plt.show()

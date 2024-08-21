@@ -12,6 +12,7 @@ with the robust shifter proper orthogonal decomposition (sPOD).
 # ============================================================================ #
 import os
 import time
+from timeit import default_timer as timer
 
 import numpy as np
 from numpy import reshape
@@ -39,6 +40,7 @@ class ReturnValue:
         ranks=None,
         ranks_hist=None,
         error_matrix=None,
+        tcpu_SVD = None,
     ):
         """
         Constructor.
@@ -60,6 +62,9 @@ class ReturnValue:
 
         :param error_matrix:
         :type error_matrix: , optional
+
+        :param tcpu_SVD
+        :type tcpu_SVD: , optional
         """
         self.frames = frames  # List of all frames
         self.data_approx = approximation  # Approximation of the snapshot data
@@ -71,7 +76,8 @@ class ReturnValue:
             self.ranks = ranks
         if ranks_hist is not None:
             self.ranks_hist = ranks_hist
-
+        if tcpu_SVD is not None:
+            self.tcpu_SVD= tcpu_SVD
 
 # ============================================================================ #
 
@@ -301,7 +307,7 @@ def shifted_POD_FB(
     if np.size(nmodes_max) != Nframes:
         nmodes = list([nmodes_max]) * Nframes
     else:
-        nmodes = [nmodes_max]
+        nmodes = nmodes_max
     qtilde_frames = [
         Frame(transfo, qtilde, Nmodes=nmodes[k]) for k, transfo in enumerate(transforms)
     ]
@@ -448,19 +454,19 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
     qtilde = np.zeros_like(snapshot_matrix)
     E = np.zeros_like(snapshot_matrix)
     Nframes = len(transforms)
-
+    
     # make a list of the number of maximal ranks in each frame
     if not np.all(nmodes_max):  # check if array is None, if so set nmodes_max onto N
         nmodes_max = np.min(np.shape(snapshot_matrix)) # use the smallest dimension beacuse after this singular values will be 0
     if np.size(nmodes_max) != Nframes:
-        nmodes = list([nmodes_max]) * Nframes
+        nmodes_max = list([nmodes_max]) * Nframes
     else:
-        nmodes = [nmodes_max]
-     
+        nmodes_max = nmodes_max
+
     if qt_frames is None:
-            qtilde_frames = [Frame(transfo, field=qtilde, Nmodes=nmodes[k]) for k, transfo in enumerate(transforms)]
+            qtilde_frames = [Frame(transfo, field=qtilde, Nmodes=nmodes_max[k]) for k, transfo in enumerate(transforms)]
     else:
-            qtilde_frames = [Frame(transfo, field=qt_frames[k], Nmodes=nmodes[k]) for k, transfo in enumerate(transforms)]
+            qtilde_frames = [Frame(transfo, field=qt_frames[k], Nmodes=nmodes_max[k]) for k, transfo in enumerate(transforms)]
 
     q = snapshot_matrix.copy()
     Y = np.zeros_like(snapshot_matrix)
@@ -471,7 +477,8 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
     res_old = 0
     rel_err_list = []
     ranks_hist = [[] for r in range(Nframes)]
-    sum_elapsed = 0
+    sum_elapsed = 0.0
+    elapsed_SVT = 0.0
     while rel_err > myparams.eps and it < myparams.maxit:
         it += 1  # counts the number of iterations in the loop
         ###################################
@@ -482,7 +489,7 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
         ###################################
         #      3. Update the frames       #
         ###################################
-        t = time.time()
+        t = timer()
 
         for k, (trafo, q_frame) in enumerate(zip(transforms, qtilde_frames)):
             qtemp = 0
@@ -490,7 +497,9 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
                 if p != k:
                     qtemp += trafo_p.apply(frame_p.build_field())
             qk = trafo.reverse(q - qtemp - E + mu_inv * Y)
-            [U, S, VT] = SVT(qk, mu_inv, q_frame.Nmodes, myparams.use_rSVD)
+            t_SVT_tmp = timer()
+            [U, S, VT] = SVT(qk, mu_inv, nmodes_max[k], myparams.use_rSVD)
+            elapsed_SVT += timer() - t_SVT_tmp
             rank = np.sum(S > 0)
             q_frame.modal_system = {
                 "U": U[:, :rank],
@@ -526,13 +535,13 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
         rel_err_without_noise = norm(reshape(res + E, -1)) / norm_q
         rel_err = norm_res / norm_q
         rel_err_list.append(rel_err)
-        elapsed = time.time() - t
+        elapsed = timer() - t
         sum_elapsed += elapsed
 
         if myparams.isVerbose:
             print(
                 "Iter {:4d} / {:d} | Rel_err= {:4.4e} | norm(dres) = {:4.1e} | "
-                "norm(Q-Qtilde)/norm(Q) = {:4.2e} | t_cpu = {:2.2f}s | "
+                "norm(Q-Qtilde)/norm(Q) = {:4.2e} norm(E)/norm(Q) = {:4.2e} | t_cpu = {:2.2e}s | "
                 "ranks_frame = ".format(
                     it,
                     myparams.maxit,
@@ -555,12 +564,11 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
         S = frame_p.modal_system["sigma"]
         frame_p.Nmodes = np.sum(S > 0)
 
-    if myparams.isError:
-        print("CPU time in total: ", sum_elapsed)
-        return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist, E)
-
     print("CPU time in total: ", sum_elapsed)
-    return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist)
+    if myparams.isError:
+        return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist, E, tcpu_SVD=elapsed_SVT)
+
+    return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist,tcpu_SVD=elapsed_SVT)
 
 
 def force_constraint(qframes, transforms, q, Niter=1, alphas=None):

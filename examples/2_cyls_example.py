@@ -82,8 +82,8 @@ plt.close("all")
 ddir = "./data/2cylinder"
 case = "vortex_street"
 load_existing = True        # Load existing data if available
-frac = 8  # fraction of grid points to use
-time_frac = 8
+frac = 1  # fraction of grid points to use
+time_frac = 2
 METHOD = "ALM"              # Method to use (ALM,BFB,JFB)
 idir = "./images/2cylinder/"+METHOD # Directory to save images
 myparams = sPOD_Param()
@@ -100,7 +100,7 @@ ux, uy, mask, p, time, Ngrid, dx, L = read_ACM_dat(
 # %% Extract data information
 Nt = np.size(ux, -1)  # Number of time intervalls
 Nvar = 1  # data.shape[0]                    # Number of variables
-nmodes = [40, 40]  # reduction of singular values
+nmodes_max = [80,80 ] # reduction of singular values
 Ngrid = np.shape(ux[..., 0])
 
 # number of grid points in x
@@ -190,8 +190,8 @@ if os.path.exists(ddir+"/Ux_"+METHOD+"_frames_00.pkl") and load_existing:
     qframes_ux = load_frames(ddir+"/Ux_"+METHOD+"_frames", Nframes)
     qframes_uy = load_frames(ddir+"/Uy_"+METHOD+"_frames", Nframes)
 else:
-    ret_vort_ux= shifted_POD(q_ux, trafos, myparams, METHOD, param_alm = param_alm_ux[0])
-    ret_vort_uy= shifted_POD(q_uy, trafos, myparams, METHOD, param_alm = param_alm_uy[0])
+    #ret_vort_ux= shifted_POD(q_ux, trafos, myparams, METHOD, param_alm = param_alm_ux[0], nmodes = nmodes_max)
+    ret_vort_uy= shifted_POD(q_uy, trafos, myparams, METHOD, param_alm = param_alm_uy[0], nmodes = nmodes_max)
     save_frames(ddir+"/Ux_"+METHOD+"_frames", ret_vort_ux.frames, ret_vort_ux.error_matrix)
     save_frames(ddir+"/Uy_"+METHOD+"_frames", ret_vort_uy.frames, ret_vort_uy.error_matrix)
     qframes_ux = ret_vort_ux.frames

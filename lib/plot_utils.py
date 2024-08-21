@@ -79,6 +79,18 @@ def show_animation(q, Xgrid=None, cycles=1, frequency = 1, figure_number = None,
             plt.draw()
             plt.pause(0.05)
 
+def tikzplotlib_fix_ncols(obj):
+    """
+    workaround for matplotlib 3.6 renamed legend's _ncol to _ncols, which breaks tikzplotlib
+    """
+    if hasattr(obj, "_ncols"):
+        obj._ncol = obj._ncols
+    if hasattr(obj, "_ncol"):
+        obj._ncols = obj._ncol
+
+    for child in obj.get_children():
+        tikzplotlib_fix_ncols(child)
+
 def save_fig(filepath, figure=None, **kwargs):
     import tikzplotlib
     import os
@@ -90,6 +102,7 @@ def save_fig(filepath, figure=None, **kwargs):
     if figure is None:
         figure = plt.gcf()
     figure.savefig(fpath + ".png", dpi=600, transparent=True)
+    tikzplotlib_fix_ncols(figure) 
     tikzplotlib.save(
         figure=figure,
         filepath=fpath + ".tex",
