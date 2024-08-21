@@ -510,7 +510,7 @@ elif METHOD == "JFB":
     myparams.lambda_s = 0.3  # adjust for case
     myparams.lambda_E = 0.0135  # adjust for case el
 if METHOD == "J2":
-        nmodes = nmodes_exact
+    nmodes = nmodes_exact
 
 ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm, nmodes=nmodes)
 
