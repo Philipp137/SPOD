@@ -306,7 +306,7 @@ def shifted_POD_FB(
         Frame(transfo, qtilde, Nmodes=nmodes[k]) for k, transfo in enumerate(transforms)
     ]
     norm_q = norm(reshape(q, -1))
-
+    
     ###########################
     # Error of the truncated SVD
     r_ = np.sum(nmodes)

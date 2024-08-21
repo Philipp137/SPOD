@@ -46,10 +46,10 @@ PIC_DIR = "../images/"
 Niter = 4
 
 fields, shift_list, L, dx, Nx, Nt, nmodes = generate_wildlandfire_data(
-    f"../examples/Wildlandfire_1d/1D_Grid.npy",
-    f"../examples/Wildlandfire_1d/Time.npy",
-    f"../examples/Wildlandfire_1d/SnapShotMatrix558.49.npy",
-    f"../examples/Wildlandfire_1d/Shifts558.49.npy",
+    f"../examples/data/Wildlandfire_1d/1D_Grid.npy",
+    f"../examples/data/Wildlandfire_1d/Time.npy",
+    f"../examples/data/Wildlandfire_1d/SnapShotMatrix558.49.npy",
+    f"../examples/data/Wildlandfire_1d/Shifts558.49.npy",
 )
 
 data_shape = [Nx, 1, 1, Nt]
@@ -65,7 +65,7 @@ print("interpolation error: %1.2e " % interp_err)
 qmat = np.reshape(fields, [Nx, Nt])
 
 # METHOD = "ALM"
-METHOD = "JFB"
+METHOD = "ALM"
 # METHOD = "BFB"
 lambda0 = 4000  # for Temperature
 # lambda0 = 27  # for supply mass
@@ -80,7 +80,8 @@ elif METHOD == "BFB":
     myparams.lambda_s = lambda0
 elif METHOD == "JFB":
     myparams.lambda_s = lambda0
-ret = shifted_POD(qmat, transfos, nmodes, myparams, METHOD, param_alm)
+
+ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm)
 
 sPOD_frames, qtilde, rel_err = ret.frames, ret.data_approx, ret.rel_err_hist
 qf = [

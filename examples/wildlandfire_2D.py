@@ -88,7 +88,7 @@ def polar_to_cartesian(polar_data, t, aux=None):
 # ============================================================================ #
 #                                  MAIN PROGRAM                                #
 # ============================================================================ #
-impath = "../examples/Wildlandfire_2d/"
+impath = "../examples//data/Wildlandfire_2d/"
 os.makedirs(impath, exist_ok=True)
 
 # %% Read the data
@@ -160,8 +160,8 @@ trafo_2 = Transform(
 err = give_interpolation_error(q_polar, trafo_1)
 print("Transformation interpolation error =  %4.4e " % err)
 
-METHOD = "J2"
-# METHOD = "ALM"
+#METHOD = "J2"
+METHOD = "ALM"
 # METHOD = "JFB"
 # METHOD = "BFB"
 
@@ -174,7 +174,7 @@ if METHOD == "J2":
     print("START J2")
     myparams.maxit = 40
     modes_list = [5, 5]
-    ret = shifted_POD(qmat, transfos, modes_list, myparams, METHOD, param_alm)
+    ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm)
 
     qframes, qtilde, rel_err = ret.frames, ret.data_approx, ret.rel_err_hist
 else:
@@ -191,15 +191,15 @@ else:
         print("START BFB")
         myparams.maxit = 18
         myparams.lambda_s = 3e4
-        modes_list = [5, 5]
+        modes_list = [5, 5] + 45
 
     elif METHOD == "JFB":
         print("START JFB")
         myparams.maxit = 15
         myparams.lambda_s = 3e4
-        modes_list = [5, 5]
+        modes_list = [5, 5] +45
 
-    ret = shifted_POD(qmat, transfos, modes_list, myparams, METHOD, param_alm)
+    ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm, nmodes= modes_list)
     qframes, qtilde, rel_err, ranks = (
         ret.frames,
         ret.data_approx,
