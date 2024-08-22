@@ -1,8 +1,8 @@
 # Predefined variables
-ZENODO_ID := 3909642
-FILE1 := BlaSU20_code_nonperiodic
-FILE2 := BlaSU20_code_periodic
-FILE3 := file3
+ZENODO_ID := 13355796
+FILE1 := 2cylinder
+FILE2 := Wildlandfire_1D
+FILE3 := Wildlandfire_2D
 
 EXAMPLE1 := synthetic_examples_1D.py
 EXAMPLE2 := redundant_frame.py
