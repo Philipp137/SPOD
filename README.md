@@ -4,7 +4,7 @@ This is a python tool for decomposing and model reduction for multiple transport
 phenomena.
 It is written in python3.
 
-![sPOD-example](https://github.com/MOR-transport/sPOD/blob/ProxBranch/sPOD_vortex-shedding.gif)
+![sPOD-example](https://github.com/MOR-transport/sPOD/blob/sPOD-main/sPOD_vortex-shedding.gif)
 
 Installation with Conda
 ------------------------
