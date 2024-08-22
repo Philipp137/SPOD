@@ -1,8 +1,8 @@
 # Predefined variables
 ZENODO_ID := 13355796
 FILE1 := 2cylinder
-FILE2 := Wildlandfire_1D
-FILE3 := Wildlandfire_2D
+FILE2 := Wildlandfire_1d
+FILE3 := Wildlandfire_2d
 
 EXAMPLE1 := synthetic_examples_1D.py
 EXAMPLE2 := redundant_frame.py
@@ -29,6 +29,7 @@ download: data
 	zenodo_get $(ZENODO_ID) && \
 	unzip -d $(FILE1) $(FILE1).zip && \
 	unzip -d $(FILE2) $(FILE2).zip && \
+	unzip -d $(FILE3) $(FILE3).zip && \
 	touch downloaded
 
 # Step 3: Run all Python examples
