@@ -8,6 +8,21 @@ It is written in python3.
 
 Requirements
 ------------
+#. For a easy installation of the sPOD library use conda with the following command:
+
+.. code-block:: bash
+
+    conda env create -f sPOD-env.yml
+
+This will create an environment called sPOD in which you can run all the examples.
+For activating the environment use:
+
+.. code-block:: bash
+
+    conda activate sPOD
+
+before executing the examples in the example folder
+
 #. In order to run `sPOD` package, the following libraries are required:
  * Numpy
  * Matplotlib
