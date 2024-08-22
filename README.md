@@ -6,8 +6,8 @@ It is written in python3.
 
 ![sPOD-example](https://github.com/MOR-transport/sPOD/blob/ProxBranch/sPOD_vortex-shedding.gif)
 
-Requirements
-------------
+Installation with Conda
+------------------------
 #. For a easy installation of the sPOD library use conda with the following command:
 
 .. code-block:: bash
@@ -21,7 +21,10 @@ For activating the environment use:
 
     conda activate sPOD
 
-before executing the examples in the example folder
+before executing the examples in the example folder.
+
+Requirements
+-------------
 
 #. In order to run `sPOD` package, the following libraries are required:
  * Numpy
@@ -38,8 +41,8 @@ before executing the examples in the example folder
     python3 -m pip install sphinx pydata-sphinx-theme
 
  
-Installation
-------------
+Usage of Library
+-----------------
 Clone the repository and use it in your python code
 
 .. code-block:: python
