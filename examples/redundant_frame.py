@@ -15,6 +15,7 @@ import sys
 
 sys.path.append("../lib")
 import numpy as np
+import os
 from numpy import mod, meshgrid, cos, sin, exp, pi
 import matplotlib.pyplot as plt
 from sPOD_algo import (
@@ -31,7 +32,7 @@ from plot_utils import save_fig
 # ============================================================================ #
 #                              Auxiliary Functions                             #
 # ============================================================================ #
-def generate_data(Nx, Nt, case, noise_percent=0.2):
+def generate_data(Nx, Nt):
     Tmax = 0.5  # total time
     L = 1  # total domain size
     sigma = 0.015  # standard diviation of the puls
@@ -44,105 +45,24 @@ def generate_data(Nx, Nt, case, noise_percent=0.2):
     X = X.T
     T = T.T
 
-    if case == "crossing_waves":
-        nmodes = 1
-        fun = lambda x, t: exp(-((mod((x - c * t), L) - 0.1) ** 2) / sigma**2) + exp(
-            -((mod((x + c * t), L) - 0.9) ** 2) / sigma**2
-        )
-
-        # Define your field as a list of fields:
-        # For example the first element in the list can be the density of a
-        # flow quantity and the second element could be the velocity in 1D
-        density = fun(X, T)
-        velocity = fun(X, T)
-        shifts1 = np.asarray(-c * t)
-        shifts2 = np.asarray(c * t)
-        Q = density  # , velocity]
-        shift_list = [shifts1, shifts2]
-    elif case == "sine_waves":
-        delta = 0.0125
-        # First frame
-        q1 = np.zeros_like(X)
-        shifts1 = -0.25 * cos(7 * pi * t)
-        for r in np.arange(1, 5):
-            x1 = 0.25 + 0.1 * r - shifts1
-            q1 = q1 + sin(2 * pi * r * T / Tmax) * exp(-((X - x1) ** 2) / delta**2)
-        # Second frame
-        c2 = dx / dt
-        shifts2 = -c2 * t
-        q2 = np.zeros_like(X)
-
-        x2 = 0.2 - shifts2
-        q2 = exp(-((X - x2) ** 2) / delta**2)
-
-        Q = q1 + q2
-        nmodes = [4, 1]
-        shift_list = [shifts1, shifts2, t**2]
-
-    elif case == "sine_waves_noise":
-        delta = 0.0125
-        # first frame
-        q1 = np.zeros_like(X)
-        shifts1 = -0.25 * cos(7 * pi * t)
-        for r in np.arange(1, 5):
-            x1 = 0.25 + 0.1 * r - shifts1
-            q1 = q1 + sin(2 * pi * r * T / Tmax) * exp(-((X - x1) ** 2) / delta**2)
-        # second frame
-        c2 = dx / dt
-        shifts2 = -c2 * t
-
-        x2 = 0.2 - shifts2
-        q2 = exp(-((X - x2) ** 2) / delta**2)
-        Q = q1 + q2  # + E
-        indices = np.random.choice(
-            np.arange(Q.size), replace=False, size=int(Q.size * noise_percent)
-        )
-        Q = Q.flatten()
-        Q[indices] = 1
-        Q = np.reshape(Q, np.shape(q1))
-        nmodes = [4, 1]
-        shift_list = [shifts1, shifts2]
-
-    elif case == "multiple_ranks":
-        delta = 0.0125
-        # first frame
-        q1 = np.zeros_like(X)
-        c2 = dx / dt
-        shifts1 = c2 * t
-        for r in np.arange(1, 5):
-            x1 = 0.5 + 0.1 * r - shifts1
-            q1 = q1 + sin(2 * pi * r * T / Tmax) * exp(-((X - x1) ** 2) / delta**2)
-        # second frame
-        c2 = dx / dt
-        shifts2 = -c2 * t
-        q2 = np.zeros_like(X)
-        for r in np.arange(1, 3):
-            x2 = 0.2 + 0.1 * r - shifts2
-            q2 = q2 + cos(2 * pi * r * T / Tmax) * exp(-((X - x2) ** 2) / delta**2)
-
-        Q = q1 + q2
-        nmodes = [4, 2]
-        shift_list = [shifts1, shifts2]
-    elif case == "multiple_ranks_redundant":
-        delta = 0.0125
-        # first frame
-        q1 = np.zeros_like(X)
-        c2 = dx / dt
-        shifts1 = c2 * t
-        for r in np.arange(1, 5):
-            x1 = 0.5 + 0.1 * r - shifts1
-            q1 = q1 + sin(2 * pi * r * T / Tmax) * exp(-((X - x1) ** 2) / delta**2)
-        # second frame
-        c2 = dx / dt
-        shifts2 = -c2 * t
-        q2 = np.zeros_like(X)
-        for r in np.arange(1, 3):
-            x2 = 0.2 + 0.1 * r - shifts2
-            q2 = q2 + cos(2 * pi * r * T / Tmax) * exp(-((X - x2) ** 2) / delta**2)
-
-        Q = q1 + q2
-        nmodes = [4, 2, 0]
-        shift_list = [shifts1, shifts2,t**2]
+    delta = 0.0125
+    # first frame
+    q1 = np.zeros_like(X)
+    c2 = dx / dt
+    shifts1 = c2 * t
+    for r in np.arange(1, 5):
+        x1 = 0.5 + 0.1 * r - shifts1
+        q1 = q1 + sin(2 * pi * r * T / Tmax) * exp(-((X - x1) ** 2) / delta**2)
+    # second frame
+    c2 = dx / dt
+    shifts2 = -c2 * t
+    q2 = np.zeros_like(X)
+    for r in np.arange(1, 3):
+        x2 = 0.2 + 0.1 * r - shifts2
+        q2 = q2 + cos(2 * pi * r * T / Tmax) * exp(-((X - x2) ** 2) / delta**2)
+    Q = q1 + q2
+    nmodes = [4, 2, 0]
+    shift_list = [shifts1, shifts2,t**2]
 
     return Q, shift_list, nmodes, L, dx
 
@@ -153,9 +73,8 @@ def generate_data(Nx, Nt, case, noise_percent=0.2):
 # ============================================================================ #
 #                              CONSTANT DEFINITION                             #
 # ============================================================================ #
-PIC_DIR = "../images/"
+PIC_DIR = "../images/redundat_frame/"
 SAVE_FIG = True
-CASE = "multiple_ranks"
 # CASE = "sine_waves"
 Nx = 400  # number of grid points in x
 Nt = Nx // 2  # number of time intervals
@@ -166,29 +85,23 @@ METHOD = "ALM"
 # METHOD = "J2"
 # ============================================================================ #
 
-
 # ============================================================================ #
 #                                 Main Program                                 #
 # ============================================================================ #
 # Clean-up
 plt.close("all")
 # Data Deneration
-fields, shift_list, nmodes, L, dx = generate_data(Nx, Nt, CASE)
+fields, shift_list, nmodes, L, dx = generate_data(Nx, Nt)
 ############################################
 # %% CALL THE SPOD algorithm
 ############################################
 data_shape = [Nx, 1, 1, Nt]
-if CASE == "multiple_ranks_redunddant":
-    transfos = [
+transfos = [
         Transform(data_shape, [L], shifts=shift_list[0], dx=[dx], interp_order=5),
         Transform(data_shape, [L], shifts=shift_list[1], dx=[dx], interp_order=5),
         Transform(data_shape, [L], shifts=shift_list[2], dx=[dx], interp_order=5),
     ]
-else:
-        transfos = [
-        Transform(data_shape, [L], shifts=shift_list[0], dx=[dx], interp_order=5),
-        Transform(data_shape, [L], shifts=shift_list[1], dx=[dx], interp_order=5),
-    ]
+
 interp_err = np.max([give_interpolation_error(fields, transfo) for transfo in transfos])
 print("interpolation error: {:1.2e}".format(interp_err))
 # %%
@@ -274,6 +187,7 @@ plt.colorbar(im2)
 plt.tight_layout()
 
 if SAVE_FIG:
+    os.makedirs(PIC_DIR,exist_ok=True)
     save_fig(PIC_DIR + "01_traveling_wave_1D_Frames_redundant.png", fig)
 #plt.show()
 
@@ -301,6 +215,7 @@ plt.legend()
 # ax2.set_title(r"$\mathbf{Q}$")
 
 if SAVE_FIG:
+    os.makedirs(PIC_DIR,exist_ok=True)
     save_fig(PIC_DIR + "/convergence_ranks_redundant.png", fig)
 
 plt.show()

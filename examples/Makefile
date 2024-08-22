@@ -4,22 +4,23 @@ FILE1 := BlaSU20_code_nonperiodic
 FILE2 := BlaSU20_code_periodic
 FILE3 := file3
 
-EXAMPLE1 := traveling_wave_1D.py
-EXAMPLE2 := timing.py
-EXAMPLE3 := wildlandfire_1D.py
-EXAMPLE3 := wildlandfire_2D.py
-EXAMPLE4 := 2_cyls_example.py
+EXAMPLE1 := synthetic_examples_1D.py
+EXAMPLE2 := redundant_frame.py
+EXAMPLE3 := timing.py
+EXAMPLE4 := wildlandfire_1D.py
+EXAMPLE5 := wildlandfire_2D.py
+EXAMPLE6 := 2_cyls_example.py
 
 # Default target
 .PHONY: all
-all: data/downloaded run
+all: download run
 
 # Step 1: Create the "data" directory
 data:
 	mkdir -p data
 
 # Step 2: Change into the "data" directory and download files using zenodo_get
-data/downloaded: data
+download: data
 	@cd data && \
 	if ! command -v zenodo_get >/dev/null 2>&1; then \
 		echo "Please install 'zenodo_get' by running: pip3 install zenodo_get"; \
@@ -36,6 +37,10 @@ run: all
 	python3 $(EXAMPLE1)
 	python3 $(EXAMPLE2)
 	python3 $(EXAMPLE3)
+	python3 $(EXAMPLE4)
+	python3 $(EXAMPLE5)
+	python3 $(EXAMPLE6)
+
 
 # Cleanup
 .PHONY: clean
