@@ -81,7 +81,7 @@ plt.close("all")
 # ddir = "../data/1params_opt/"
 ddir = "./data/2cylinder"
 case = "vortex_street"
-load_existing = True        # Load existing data if available
+load_existing = False        # Load existing data if available
 frac = 1  # fraction of grid points to use
 time_frac = 1
 METHOD = "ALM"              # Method to use (ALM,BFB,JFB)
@@ -90,6 +90,8 @@ myparams = sPOD_Param()
 myparams.maxit = 500        # maximal number of iterations
 myparams.use_rSVD =True    # use rSVD instead of SVD in sPOD algorithm
 myparams.isError = True     # make sure sPOD uses noise term
+myparams.gtol = 1e-4        # if the relative error decreases less then gtol the iterations are stopped
+myparams.eps = 1e-2
 mu = 16.0
 # read data
 ux, uy, mask, p, time, Ngrid, dx, L = read_ACM_dat(

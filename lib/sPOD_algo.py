@@ -554,8 +554,7 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
                 *ranks
             )
 
-        if it > 5 and np.abs(rel_err_list[-1] - rel_err_list[-4]) \
-           < myparams.gtol * abs(rel_err_list[-1]):
+        if it > 5 and (np.abs(rel_err_list[-1] - rel_err_list[-4]) < myparams.gtol * abs(rel_err_list[-1]) or rel_err_list[-1] > rel_err_list[-4]):
             break
 
     qtilde = 0
@@ -685,8 +684,10 @@ class sPOD_Param:
     Structure that stores the parameters for the sPOD algorithms.
 
     Attributes:
-        gtol (float): Global tolerance for the stopping criterion of the algorithms.
-        eps (float): Global tolerance for the stopping criterion of the algorithms.
+        gtol (float): If the relative approximation error decreases less than gtol, 
+                      the algorithm stops
+        eps (float): If the relative approximation error is below eps,
+                     the algorithm stops
         maxit (int): Maximum number of iterations.
         isVerbose (bool): Should the algorithm print information while running?
         isError (bool): Should the algorithm use the error term?
