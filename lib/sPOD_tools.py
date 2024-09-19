@@ -254,8 +254,6 @@ class Frame:
         self.set_orthonormal_system(new_field)
 
         return self
-
-
 # ============================================================================ #
 
 
@@ -347,8 +345,6 @@ def reconstruction_error(snapshotmatrix, frames, transfos=None, max_ranks=None):
                 error_matrix[dof, ir] = r
 
     return error_matrix
-
-
 # ============================================================================ #
 
 
@@ -383,8 +379,6 @@ def shift_velocities(dx, dt, fields, n_velocities, v_min, v_max, v_step, n_modes
         c_shifts.append(v_shifts[max_index_x])
 
     return c_shifts
-
-
 # ============================================================================ #
 
 
@@ -476,8 +470,6 @@ def trunc_svd(X, nmodes_max=None, use_rSVD=False):
     else:
         u, s, vt = svd(X, full_matrices=False)
     return (u, s, vt)
-
-
 # ============================================================================ #
 
 
@@ -501,6 +493,4 @@ def update_and_reduce_modes(Xtilde_frames, alpha, X_coef_shift, Nmodes_reduce):
         frame.Nmodes = Nmodes_reduce  # Reduce to the desired number of modes
         [U, S, VT] = trunc_svd(Xnew_k, Nmodes_reduce)
         frame.modal_system = {"U": U, "sigma": S, "VT": VT}
-
-
 # ============================================================================ #

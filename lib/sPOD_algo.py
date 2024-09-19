@@ -227,7 +227,7 @@ def shifted_POD_J2(
             )
             if myparams.total_variation_iterations > 0:
                 q_frame.smoothen_time_amplitudes(
-                    TV_iterations=myparams.total_variation_iterations
+                    TV_iterations=myparams.tv_niter
                 )
             qtilde += trafo.apply(q_frame.build_field())
             S = q_frame.modal_system["sigma"]
@@ -248,6 +248,146 @@ def shifted_POD_J2(
             < myparams.gtol * abs(rel_err_list[-1])
         ):
             break
+    print("CPU time in total: ", sum_elapsed)
+    return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist)
+
+def shifted_POD_BFBTV(
+    snapshot_matrix,
+    transforms,
+    myparams,
+    nmodes_max=None,
+):
+    assert (
+        np.ndim(snapshot_matrix) == 2
+    ), "Please give enter a snapshotmatrix with every snapshot in one column"
+    if myparams.use_rSVD:
+        warn(
+            "Warning: Using rSVD to accelarate decomposition procedure may lead "
+            "to different results."
+        )
+
+    ###################################
+    #        1. Initialization        #
+    ###################################
+    q = snapshot_matrix
+    qtilde = np.zeros_like(q)
+    if myparams.isError:
+        E = np.zeros_like(snapshot_matrix)
+    Nframes = len(transforms)
+    # make a list of the number of maximal ranks in each frame
+    if not np.all(nmodes_max):  # check if array is None, if so set nmodes_max onto N
+        nmodes_max = np.min(np.shape(snapshot_matrix)) # use the smallest dimension beacuse after this singular values will be 0
+    if np.size(nmodes_max) != Nframes:
+        nmodes = list([nmodes_max]) * Nframes
+    else:
+        nmodes = nmodes_max
+    qtilde_frames = [
+        Frame(transfo, qtilde, Nmodes=nmodes[k]) for k, transfo in enumerate(transforms)
+    ]
+    norm_q = norm(reshape(q, -1))
+    D = generate_discr_diff_mat(q.shape[1])
+    spnorm_D = np.linalg.norm(D, 2)
+    
+    ###########################
+    # Error of the truncated SVD
+    r_ = np.sum(nmodes)
+    (u, s, vt) = trunc_svd(q, nmodes_max=None, use_rSVD=myparams.use_rSVD)
+    err_svd = np.linalg.norm(q - np.dot(u * s, vt), ord="fro") / norm_q
+    print(
+        "Relative error using a truncated SVD with {:d} modes:{:4.4e}".format(
+            r_, err_svd
+        )
+    )
+    ###########################
+
+    current_it = 0
+    objective_0 = 0.5 * norm(q, ord="fro") ** 2
+    objective_list = [objective_0]
+    rel_decrease = 1
+    rel_decrease_list = [1]
+    rel_err_list = []
+    ranks_hist = [[] for r in range(Nframes)]
+    sum_elapsed = 0
+
+    V = []
+    for k in range(Nframes):
+        V.append(np.zeros(q.shape))
+    
+    while rel_decrease > myparams.eps and current_it < myparams.maxit:
+        current_it += 1
+        ###################################
+        #      2. Calculate residual      #
+        ###################################
+        if myparams.isError:
+            res = q - qtilde - E
+        else:
+            res = q - qtilde
+        norm_res = norm(reshape(res, -1))
+        rel_err = norm_res / norm_q
+        rel_err_list.append(rel_err)
+        ranks = [0] * Nframes
+
+        ###################################
+        #      3. Update the frames       #
+        ###################################
+        t = time.perf_counter()
+        for k, (trafo, q_frame) in enumerate(zip(transforms, qtilde_frames)):
+            for iter in range(myparams.tv_niter):
+                # Primal update
+                res_shifted = trafo.reverse(res)
+                q_frame_field = q_frame.build_field()
+                qtilde -= trafo.apply(q_frame.build_field())
+                tau = 1 / Nframes
+                sigma = 0.99 / (tau*spnorm_D**2)
+                q_frame.set_orthonormal_system_svt(
+                    q_frame_field + tau * res_shifted - tau*sigma*V[k]@D.T,
+                    tau * myparams.lambda_s
+                )
+                # Dual update
+                q_frame_field = q_frame.build_field()
+                tmp = V[k] + q_frame_field @ D
+                V[k] = tmp - shrink(tmp, myparams.mu/sigma)
+            
+            S = q_frame.modal_system["sigma"]
+            rank = np.sum(S > 0)
+            ranks[k] = rank
+            ranks_hist[k].append(rank)
+            qtilde += trafo.apply(q_frame.build_field())
+            if myparams.isError:
+                res = q - qtilde - E
+            else:
+                res = q - qtilde
+        if myparams.isError:
+            E = shrink(E + stepsize * res, stepsize * myparams.lambda_E)
+            objective = (
+                0.5 * norm(res, ord="fro") ** 2
+                + myparams.lambda_s
+                * sum(norm(qk.build_field(), ord="nuc") for qk in qtilde_frames)
+                + myparams.lambda_E * norm(E, ord=1)
+            )
+        else:
+            objective = 0.5 * norm(res, ord="fro") ** 2 + myparams.lambda_s * sum(
+                norm(qk.build_field(), ord="nuc") for qk in qtilde_frames
+            )
+        objective_list.append(objective)
+        rel_decrease = np.abs((objective_list[-1] - objective_list[-2])) / np.abs(
+            objective_list[-1]
+        )
+        rel_decrease_list.append(rel_decrease)
+        elapsed = time.perf_counter() - t
+        sum_elapsed += elapsed
+        if myparams.isVerbose:
+            print(
+                "Iter {:4d} / {:d} | Rel_err= {:4.4e} | t_cpu = {:2.2f}s | "
+                "ranks_frame = ".format(current_it, myparams.maxit, rel_err, elapsed),
+                *ranks
+            )
+        if (current_it > 5) and (rel_decrease < myparams.gtol):
+            break
+
+    if myparams.isError:
+        print("CPU time in total: ", sum_elapsed)
+        return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist, E)
     print("CPU time in total: ", sum_elapsed)
     return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist)
 
@@ -362,9 +502,9 @@ def shifted_POD_FB(
             q_frame.set_orthonormal_system_svt(
                 q_frame_field + stepsize * res_shifted, stepsize * myparams.lambda_s
             )
-            if myparams.total_variation_iterations > 0:
+            if myparams.tv_niter > 0:
                 q_frame.smoothen_time_amplitudes(
-                    TV_iterations=myparams.total_variation_iterations
+                    TV_iterations=myparams.tv_nit
                 )
             S = q_frame.modal_system["sigma"]
             rank = np.sum(S > 0)
@@ -569,6 +709,30 @@ def shifted_POD_ALM(snapshot_matrix, transforms, myparams, nmodes_max=None, mu=N
 
     return ReturnValue(qtilde_frames, qtilde, rel_err_list, ranks, ranks_hist,tcpu_SVD=elapsed_SVT)
 
+def generate_discr_diff_mat(dim, order=1):
+    r"""Generate the discrete differential matrix, i.e. the matrix with 1 on
+    its diagonal and -1 on its first sub-diagonal.
+
+    :param dim: Dimension of the matrix.
+    :type dim: int
+
+    :param order: Order of the differential (default value=1).
+    :type order: int
+
+    :return: The discrete gradient matrix.
+    """
+    L = np.eye(dim)
+
+    D = np.zeros([dim, dim])
+    i, j = np.indices(D.shape)
+    D[i == j] = 1
+    D[i == j + 1] = -1
+    #D[0, dim - 1] = -1
+
+    for i in range(order):
+        L = np.matmul(L, D)
+
+    return L
 
 def force_constraint(qframes, transforms, q, Niter=1, alphas=None):
     """This function enforces the constraint 
@@ -670,8 +834,6 @@ def load_frames(fname, Nframes, load_ErrMat=False):
         return frame_list, E
     else:
         return frame_list
-
-
 # ============================================================================ #
 
 
@@ -696,9 +858,9 @@ class sPOD_Param:
                           co-moving frames.
         lambda_E (float): Regularization parameter for the l1-norm of the error
                           term.
-        total_variation_itertations (int): Number of iterations of the iterative
-                                           algorithm that computes the proximal
-                                           operator of the total variation (TV).
+        mu (float): Regularization parameter for the Total variation term.
+        tv_niter (int): Number of iterations for the Rescaled Forward-Backward
+                        based Primal Dual algorithm.
     """
 
     gtol: float = 1e-5
@@ -709,7 +871,6 @@ class sPOD_Param:
     use_rSVD: bool = False
     lambda_s: float = 1e-2
     lambda_E: float = 1e-2
-    total_variation_iterations: int = -1
-
-
+    mu: float = 1e-2
+    tv_niter: int = -1
 # ============================================================================ #

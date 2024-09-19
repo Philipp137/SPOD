@@ -19,6 +19,7 @@ from numpy import mod, meshgrid, cos, sin, exp, pi
 import matplotlib.pyplot as plt
 from sPOD_algo import (
     shifted_POD,
+    shifted_POD_BFBTV,
     sPOD_Param,
     give_interpolation_error,
 )
@@ -140,8 +141,8 @@ CASE = "multiple_ranks"
 Nx = 400  # number of grid points in x
 Nt = Nx // 2  # number of time intervals
 Niter = 500  # number of sPOD iterations
-METHOD = "ALM"
-#METHOD = "BFB"
+#METHOD = "ALM"
+METHOD = "BFB"
 #METHOD = "JFB"
 #METHOD = "J2"
 # ============================================================================ #
@@ -171,6 +172,8 @@ mu0 = Nx * Nt / (4 * np.sum(np.abs(qmat)))
 lambd0 = 1 / np.sqrt(np.maximum(Nx, Nt))
 myparams = sPOD_Param()
 myparams.maxit = Niter
+myparams.mu = 0.005
+myparams.tv_niter = 1
 param_alm = None
 nmodes = None
 
@@ -182,7 +185,8 @@ elif METHOD == "JFB":
     myparams.lambda_s = 0.4  # adjust for case
 elif METHOD == "J2":
     nmodes = nmodes_exact
-ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm, nmodes=nmodes)
+#ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm, nmodes=nmodes)
+ret = shifted_POD_BFBTV(qmat, transfos, myparams, nmodes_max=nmodes)
 
 sPOD_frames, qtilde, rel_err = ret.frames, ret.data_approx, ret.rel_err_hist
 qf = [
