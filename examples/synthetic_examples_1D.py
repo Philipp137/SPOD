@@ -549,7 +549,7 @@ if plot_shifted:
     ax[2].pcolormesh(qf[k_frame], vmin=vmin, vmax=vmax, cmap=mycmap)
     ax[2].set_title(r"$T^" + str(k_frame + 1) + "\mathbf{Q}^" + str(k_frame + 1) + "$")
 else:
-    ax[2].pcolormesh(sPOD_frames[k_frame].build_field())
+    ax[2].pcolormesh(sPOD_frames[k_frame].build_field(), vmin=vmin, vmax=vmax, cmap=mycmap)
     ax[2].set_title(r"$\mathbf{Q}^" + str(k_frame + 1) + "$")
 ax[2].axis("off")
 # ax[1].axis("image")
@@ -559,7 +559,7 @@ if plot_shifted:
     im2 = ax[3].pcolormesh(qf[k_frame], vmin=vmin, vmax=vmax, cmap=mycmap)
     ax[3].set_title(r"$T^" + str(k_frame + 1) + "\mathbf{Q}^" + str(k_frame + 1) + "$")
 else:
-    im2 = ax[3].pcolormesh(sPOD_frames[k_frame].build_field())
+    im2 = ax[3].pcolormesh(sPOD_frames[k_frame].build_field(), vmin=vmin, vmax=vmax, cmap=mycmap)
     ax[3].set_title(r"$\mathbf{Q}^" + str(k_frame + 1) + "$")
 ax[3].axis("off")
 # ax[2].axis("image")
