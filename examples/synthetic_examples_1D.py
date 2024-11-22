@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from sPOD_algo import (
     shifted_POD,
     shifted_POD_BFBTV,
+    shifted_POD_BFBTV_v2,
     sPOD_Param,
     give_interpolation_error,
 )
@@ -186,7 +187,7 @@ elif METHOD == "JFB":
 elif METHOD == "J2":
     nmodes = nmodes_exact
 #ret = shifted_POD(qmat, transfos, myparams, METHOD, param_alm, nmodes=nmodes)
-ret = shifted_POD_BFBTV(qmat, transfos, myparams, nmodes_max=nmodes)
+ret = shifted_POD_BFBTV_v2(qmat, transfos, myparams, nmodes_max=nmodes)
 
 sPOD_frames, qtilde, rel_err = ret.frames, ret.data_approx, ret.rel_err_hist
 qf = [
@@ -200,8 +201,8 @@ qf = [
 gridspec = {"width_ratios": [1, 1, 1, 1]}
 fig, ax = plt.subplots(1, 4, figsize=(12, 4), gridspec_kw=gridspec, num=101)
 mycmap = "viridis"
-vmin = np.min(qtilde) * 0.6
-vmax = np.max(qtilde) * 0.6
+vmin = np.min(qmat) * 0.6
+vmax = np.max(qmat) * 0.6
 
 ax[0].pcolormesh(qmat, vmin=vmin, vmax=vmax, cmap=mycmap)
 ax[0].set_title(r"$\mathbf{Q}$")
