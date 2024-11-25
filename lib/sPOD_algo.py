@@ -469,9 +469,9 @@ def shifted_POD_BFBTV_v2(
     N_U = myparams.tv_niter
     N_S = myparams.tv_niter
     N_V = myparams.tv_niter
-    step_U = 0.1 / Nframes
-    step_S = 0.1 / Nframes
-    step_V_prim = 0.1 / Nframes
+    step_U = 1 / Nframes
+    step_S = 1 / Nframes
+    step_V_prim = 1 / Nframes
     step_V_dual = 0.99 / (step_V_prim*spnorm_D**2)
     
     while abs(rel_decrease) > myparams.eps and current_it < myparams.maxit:
@@ -509,11 +509,43 @@ def shifted_POD_BFBTV_v2(
                 U = U + step_U * G_U
                 # Projection step
                 U = U @ np.linalg.inv(sqrtm(U.T@U))
+
+                # Update residual
+                q_frame_field_old = q_frame.build_field()
+                qtilde -= trafo.apply(q_frame_field_old)
+                q_frame.modal_system = {
+                    "U": U,
+                    "sigma": S,
+                    "VT": VT
+                }
+                q_frame_field = q_frame.build_field()
+                qtilde += trafo.apply(q_frame.build_field())
+                if myparams.isError:
+                    res = q - qtilde - E
+                else:
+                    res = q - qtilde
+                res_shifted = trafo.reverse(res)
             # 2) Update in s^k (proximal gradient descent)
             for subiter in range(N_S):
                 G_S = khatri_rao(VT.T,U).T@res_shifted.flatten()
                 #G_S = res_shifted.T@U@VT
                 S = shrink(S + step_S * G_S, myparams.lambda_s*step_S)
+
+                # Update residual
+                q_frame_field_old = q_frame.build_field()
+                qtilde -= trafo.apply(q_frame_field_old)
+                q_frame.modal_system = {
+                    "U": U,
+                    "sigma": S,
+                    "VT": VT
+                }
+                q_frame_field = q_frame.build_field()
+                qtilde += trafo.apply(q_frame.build_field())
+                if myparams.isError:
+                    res = q - qtilde - E
+                else:
+                    res = q - qtilde
+                res_shifted = trafo.reverse(res)
             # 3) Update in V^k (RFBPD)
             for subiter in range(N_V):
                 # 3.a) Primal update
@@ -523,6 +555,22 @@ def shifted_POD_BFBTV_v2(
                 # 3.b) Dual update
                 tmp = Z[k] + VT@D
                 Z[k] = tmp - shrink(tmp, myparams.mu/step_V_dual)
+
+                # Update residual
+                q_frame_field_old = q_frame.build_field()
+                qtilde -= trafo.apply(q_frame_field_old)
+                q_frame.modal_system = {
+                    "U": U,
+                    "sigma": S,
+                    "VT": VT
+                }
+                q_frame_field = q_frame.build_field()
+                qtilde += trafo.apply(q_frame.build_field())
+                if myparams.isError:
+                    res = q - qtilde - E
+                else:
+                    res = q - qtilde
+                res_shifted = trafo.reverse(res)
             # Reconstruct Q^k from its SVD factors
             q_frame.modal_system = {
                 "U": U,
