@@ -689,9 +689,9 @@ def shifted_POD_BFBTV_v2(
     N_U = myparams.tv_niter
     N_S = myparams.tv_niter
     N_V = myparams.tv_niter
-    step_U = 1 / Nframes
-    step_S = 1 / Nframes
-    step_V_prim = 1 / Nframes
+    step_U = 0.1 / Nframes
+    step_S = 0.1 / Nframes
+    step_V_prim = 0.01 / Nframes
     step_V_dual = 0.99 / (step_V_prim*spnorm_D**2)
     
     while abs(rel_decrease) > myparams.eps and current_it < myparams.maxit:
